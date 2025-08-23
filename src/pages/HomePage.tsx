@@ -17,6 +17,8 @@ const DashboardPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { data, isLoading, isError } = useDataResponse();
 
+    const cards = data ?? [];
+
     // 입력창 표시 상태 추가
     const [showInput, setShowInput] = useState(false);
     const [categoryName, setCategoryName] = useState('');
@@ -82,10 +84,16 @@ const DashboardPage: React.FC = () => {
         <div className="min-h-screen flex items-center justify-center">
             <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 mx-auto mb-4"></div>
-            <h2 className="text-xl mb-2">AI가 데이터를 분석하고 있습니다</h2>
+            <h2 className="text-xl mb-2">로딩중입니다</h2>
             <p className="">잠시만 기다려주세요...</p>
             </div>
         </div>
+        );
+    }
+
+    if (isError){
+        return (
+            <div className="">Error</div>
         );
     }
 
@@ -106,11 +114,13 @@ const DashboardPage: React.FC = () => {
             <div 
                 onClick={()=>navigate('/')}
                 className="px-6 py-2">
-                <div className="flex items-center space-x-3 cursor-pointer">
+                <div className="flex items-center space-x-3 cursor-pointer bg-gray-100 text-black-600 rounded-lg">
                 <span>📁 Home</span>
                 </div>
             </div>
-            <div className="px-6 py-2">
+            <div 
+                onClick={() => navigate('/tracking')}
+                className="px-6 py-2">
                 <div className="flex items-center space-x-3 cursor-pointer">
                 <span>🔎 Tracking</span>
                 </div>
@@ -127,12 +137,19 @@ const DashboardPage: React.FC = () => {
 
                 {/* 파트 섹션들 */}
                 <div className="flex items-start space-x-6 p-6">
-                    {sections.map((section) => (
-                        <ResourceSection 
-                            key={section.id}
-                            title={section.title}
-                        />
-                    ))}
+                    {sections.map((section) => {
+                        const categoryData = Array.isArray(cards) ? cards.find(card => card.category === section.title) : null;
+                        const documents = categoryData?.documentInfo || [];
+                        
+                        return (
+                            <ResourceSection 
+                                key={section.id}
+                                title={section.title}
+                                documents={documents}  // ✅ API 데이터 전달
+                                categoryId={categoryData?.categoryId}
+                            />
+                        );
+                    })}
                     
                     {/* Plus 버튼과 입력창 */}
                     <div className="flex flex-col" ref={inputRef}>

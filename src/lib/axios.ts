@@ -1,11 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
-const axiosInstance = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE, // 환경변수로 주입
-    withCredentials: true,
-});
-
 // 기존 axios 설정에 추가
 // axios.ts
 export const uploadDocument = (data: any) => {
@@ -25,12 +20,29 @@ export const uploadDocument = (data: any) => {
         newbieDoc: data.request.newbieDoc,
     });
 
-    return axiosInstance.post('/api/hr-documents/upload', formData, {
+    // 토큰 가져오기
+    const token = useAuthStore.getState().token;
+    
+    // 헤더 설정
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return axios.post('/api/hr-documents/upload', formData, {
+        headers,
         timeout: 60000,
+        withCredentials: true,
     });
 };
 
-console.log('AXIOS BASE', axiosInstance.defaults.baseURL);
+console.log('Using proxy to:', 'https://namul-backend-production-7a51.up.railway.app');
+
+// axiosInstance는 다른 곳에서 사용할 수 있도록 유지
+const axiosInstance = axios.create({
+    baseURL: '/api',
+    withCredentials: true,
+});
 
 axiosInstance.interceptors.request.use((config) => {
     const token = useAuthStore.getState().token;
