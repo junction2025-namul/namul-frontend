@@ -109,6 +109,8 @@ const ResourceSection = ({ title }: ResourceSection) => {
                     <UploadModal 
                         onAddCard={handleAddCard}
                         onClose={handleCloseModal}
+                        categoryId={title} // 또는 실제 카테고리 ID
+                        uploadedBy="current-user" // 실제 사용자 ID
                     />
                 )}
             </div> 

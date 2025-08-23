@@ -14,7 +14,3 @@ export type DataResponseProps = {
 }
 
 export type DataResponse = ApiResponse<DataResponseProps>;
-
-
-
-

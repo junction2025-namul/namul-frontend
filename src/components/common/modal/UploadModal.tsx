@@ -1,16 +1,33 @@
 import React, { useState } from 'react';
 import { X, FileText, Link, Mountain, Upload } from 'lucide-react';
+import { useUploadDocument, fileToBase64 } from '../../../hooks/useUpload';
+
+type Card = {
+    id: number;
+    name: string;
+    description?: string;
+    tag?: string;
+    date: string;
+    type: "file" | "link";
+}
 
 type UploadModalProps = {
     onAddCard: (card: Omit<Card, 'id'>) => void;
     onClose: () => void;
+    categoryId: string; // API 연결을 위해 추가
+    uploadedBy: string; // API 연결을 위해 추가
 }
 
-const UploadModal = ({ onAddCard, onClose }: UploadModalProps) => {
+const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModalProps) => {
     const [activeTab, setActiveTab] = useState<'file' | 'link'>('file');
     const [isDragOver, setIsDragOver] = useState(false);
     const [additionalNotes, setAdditionalNotes] = useState('');
     const [preShare, setPreShare] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [linkUrl, setLinkUrl] = useState('');
+
+    // API 뮤테이션 훅 사용
+    const { mutate: uploadDocument, isLoading, isError, error } = useUploadDocument();
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -25,33 +42,71 @@ const UploadModal = ({ onAddCard, onClose }: UploadModalProps) => {
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         setIsDragOver(false);
-        // 파일 처리 로직
         const files = e.dataTransfer.files;
-        console.log('Dropped files:', files);
+        if (files && files.length > 0) {
+            setSelectedFile(files[0]);
+        }
     };
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (files) {
-            console.log('Selected files:', files);
+        if (files && files.length > 0) {
+            setSelectedFile(files[0]);
         }
     };
 
-    const handleUpload = () => {
-        // 업로드 처리 후 카드 추가
-        const newCard = {
-            name: "File", // 실제로는 파일명이나 링크
-            description: additionalNotes || undefined,
-            tag: preShare ? "미리 공유" : undefined,
-            date: new Date().toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            }),
-            type: activeTab as "file" | "link"
-        };
-        
-        onAddCard(newCard);
+    const handleUpload = async () => {
+        let fileContent = '';
+        let cardName = '';
+
+        if (activeTab === 'file') {
+            if (!selectedFile) {
+                alert('파일을 선택해주세요.');
+                return;
+            }
+            fileContent = await fileToBase64(selectedFile);
+            cardName = selectedFile.name;
+        } else {
+            if (!linkUrl.trim()) {
+                alert('링크 URL을 입력해주세요.');
+                return;
+            }
+            fileContent = linkUrl.trim();
+            cardName = linkUrl.trim();
+        }
+
+        // API 호출
+        uploadDocument({
+            file: fileContent,
+            request: {
+                categoryId: categoryId,
+                uploadedBy: uploadedBy,
+                newbieDoc: preShare,
+            },
+        }, {
+            onSuccess: (apiResponse) => {
+                console.log('API 업로드 성공:', apiResponse);
+                
+                // 성공 시 카드 추가
+                const newCard: Omit<Card, 'id'> = {
+                    name: cardName,
+                    description: additionalNotes || undefined,
+                    tag: preShare ? "미리 공유" : undefined,
+                    date: new Date().toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    }),
+                    type: activeTab as "file" | "link"
+                };
+                onAddCard(newCard);
+                onClose();
+            },
+            onError: (err) => {
+                console.error("API 업로드 실패:", err);
+                alert(`업로드 실패: ${err.message}`);
+            }
+        });
     };
 
     return (
@@ -96,32 +151,47 @@ const UploadModal = ({ onAddCard, onClose }: UploadModalProps) => {
                     </button>
                 </div>
 
-                {/* 파일 드롭 영역 */}
-                <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors ${
-                        isDragOver
-                            ? 'border-blue-400 bg-blue-50'
-                            : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                >
-                    <Mountain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-700 mb-2">
-                        Drop your document here, or{' '}
-                        <label className="text-blue-600 cursor-pointer hover:text-blue-700">
-                            click to browse
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={handleFileSelect}
-                                accept=".png,.jpg,.jpeg"
-                            />
+                {/* 콘텐츠 영역 */}
+                {activeTab === 'file' ? (
+                    <div
+                        className={`border-2 border-dashed rounded-lg p-8 text-center mb-6 transition-colors ${
+                            isDragOver
+                                ? 'border-blue-400 bg-blue-50'
+                                : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                    >
+                        <Mountain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-700 mb-2">
+                            {selectedFile ? selectedFile.name : 'Drop your document here, or'}
+                            <label className="text-blue-600 cursor-pointer hover:text-blue-700 ml-1">
+                                {selectedFile ? '다른 파일 선택' : 'click to browse'}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleFileSelect}
+                                    accept=".pdf,.png,.jpg,.jpeg"
+                                />
+                            </label>
+                        </p>
+                        <p className="text-sm text-gray-500">.pdf, .png, .jpg, up to 5MB.</p>
+                    </div>
+                ) : (
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            링크 URL
                         </label>
-                    </p>
-                    <p className="text-sm text-gray-500">.png, .jpg, up to 5MB.</p>
-                </div>
+                        <input
+                            type="url"
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            placeholder="링크를 입력해주세요"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+                )}
 
                 {/* 추가 참고사항 */}
                 <div className="mb-6">
@@ -156,11 +226,21 @@ const UploadModal = ({ onAddCard, onClose }: UploadModalProps) => {
                 <div className="flex justify-end">
                     <button
                         onClick={handleUpload}
-                        className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
-                        <Upload className="w-4 h-4" />
-                        <span>Upload</span>
+                        disabled={isLoading}
+                        className="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2 disabled:opacity-50"
+                    >
+                        {isLoading ? (
+                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ) : (
+                            <Upload className="w-4 h-4" />
+                        )}
+                        <span>{isLoading ? '업로드 중...' : 'Upload'}</span>
                     </button>
                 </div>
+                {isError && <p className="text-red-500 mt-2 text-right">업로드 실패: {error?.message}</p>}
             </div>
         </div>
     );
