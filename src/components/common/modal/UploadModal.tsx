@@ -115,7 +115,6 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                 {/* 헤더 */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <p className="text-gray-500 text-sm mb-1">Frame 2610313</p>
                         <h2 className="text-2xl font-bold text-gray-900">Upload</h2>
                     </div>
                     <button 
@@ -131,7 +130,7 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                         onClick={() => setActiveTab('file')}
                         className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             activeTab === 'file'
-                                ? 'bg-pink-100 text-pink-700'
+                                ? 'bg-gray-300 text-gray-900'
                                 : 'text-gray-600 hover:text-gray-900'
                         }`}
                     >
@@ -142,7 +141,7 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                         onClick={() => setActiveTab('link')}
                         className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             activeTab === 'link'
-                                ? 'bg-pink-100 text-pink-700'
+                                ? 'bg-gray-300 text-gray-900'
                                 : 'text-gray-600 hover:text-gray-900'
                         }`}
                     >
@@ -217,9 +216,6 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                         />
                         <span className="text-sm text-gray-700">입사전에 미리 공유</span>
                     </label>
-                    <p className="text-xs text-gray-500 mt-1 ml-6">
-                        고토에 추가하는 경우에만 '인사전에 미리 고인 황선화된 7인에는 어음
-                    </p>
                 </div>
 
                 {/* 업로드 버튼 */}

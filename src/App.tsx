@@ -7,6 +7,7 @@ import DataUploadPage from './pages/DataUploadPage';
 import DashboardPage from './pages/DashboardPage';
 import HomePage from './pages/HomePage';
 import TrackingPage from './pages/TrackingPage';
+import ChecklistPage from './pages/ChecklistPage';
 
 function App() {
   const queryClient = new QueryClient();
@@ -32,6 +33,10 @@ function App() {
         {
           path: "tracking",
           element: <TrackingPage />,
+        },
+        {
+          path: "checklist",
+          element: <ChecklistPage />,
         },
       ],
     },
