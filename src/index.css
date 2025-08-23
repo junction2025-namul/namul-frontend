@@ -32,6 +32,12 @@
   }
 }
 
+:root {
+  --color-primary: #18181B;
+}
+
 @layer utilities {
-  
+  .text-primary {
+    color: var(--color-primary);
+  }
 }
