@@ -2,11 +2,23 @@ import { Plus } from "lucide-react";
 import ResourceCard from "./ResourceCard";
 import { useState } from "react";
 import UploadModal from "../modal/UploadModal";
-import ic_upload from '../../../assets/icons/ic_upload.svg';
+import ic_upload from '../../../assets/icons/ic_upload.svg'
+import type { DocumentData } from "../../../types/DataProps";
 
 type ResourceSection = {
     title: string;
+    documents?: DocumentData[];  // ✅ API 데이터 받기
+    categoryId?: string;
 }
+
+// 2. API 데이터를 Card 형태로 변환
+// const apiCards: Card[] = documents.map(doc => ({
+//     id: parseInt(doc.docId),
+//     name: doc.title,
+//     date: doc.uploadDate,
+//     type: "file" as const,
+//     tag: doc.newbieDoc ? "신규" : undefined
+// }));
 
 type Card = {
     id: number;
@@ -109,8 +121,6 @@ const ResourceSection = ({ title }: ResourceSection) => {
                     <UploadModal 
                         onAddCard={handleAddCard}
                         onClose={handleCloseModal}
-                        categoryId={title} // 또는 실제 카테고리 ID
-                        uploadedBy="current-user" // 실제 사용자 ID
                     />
                 )}
             </div> 

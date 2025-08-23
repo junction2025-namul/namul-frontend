@@ -17,6 +17,8 @@ const DashboardPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { data, isLoading, isError } = useDataResponse();
 
+    const cards = data ?? [];
+
     // 입력창 표시 상태 추가
     const [showInput, setShowInput] = useState(false);
     const [categoryName, setCategoryName] = useState('');
@@ -89,6 +91,12 @@ const DashboardPage: React.FC = () => {
         );
     }
 
+    if (isError){
+        return (
+            <div className="">Error</div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex">
         {/* 좌측 사이드바 */}
@@ -127,12 +135,19 @@ const DashboardPage: React.FC = () => {
 
                 {/* 파트 섹션들 */}
                 <div className="flex items-start space-x-6 p-6">
-                    {sections.map((section) => (
-                        <ResourceSection 
-                            key={section.id}
-                            title={section.title}
-                        />
-                    ))}
+                    {sections.map((section) => {
+                        const categoryData = Array.isArray(cards) ? cards.find(card => card.category === section.title) : null;
+                        const documents = categoryData?.documentInfo || [];
+                        
+                        return (
+                            <ResourceSection 
+                                key={section.id}
+                                title={section.title}
+                                documents={documents}  // ✅ API 데이터 전달
+                                categoryId={categoryData?.categoryId}
+                            />
+                        );
+                    })}
                     
                     {/* Plus 버튼과 입력창 */}
                     <div className="flex flex-col" ref={inputRef}>

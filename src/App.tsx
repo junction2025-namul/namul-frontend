@@ -6,6 +6,7 @@ import Layout from './layout/Layout';
 import DataUploadPage from './pages/DataUploadPage';
 import DashboardPage from './pages/DashboardPage';
 import HomePage from './pages/HomePage';
+import TrackingPage from './pages/TrackingPage';
 
 function App() {
   const queryClient = new QueryClient();
@@ -27,7 +28,11 @@ function App() {
         {
           path: "dataupload",
           element: <DataUploadPage />,
-        }
+        },
+        {
+          path: "tracking",
+          element: <TrackingPage />,
+        },
       ],
     },
   ]);
