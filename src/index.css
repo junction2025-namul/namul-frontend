@@ -1,23 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  @font-face {
+    font-family: 'Pretendard Variable';
+    font-weight: 45 920;
+    font-style: normal;
+    font-display: swap;
+    src: url('./assets/fonts/PretendardVariable.woff2') format('woff2-variations');
+  }
+
+  body {
+    font-family: 'Pretendard Variable', system-ui, serif;
+    @apply flex justify-center bg-white;
+  }
+
+  h1 {
+    @apply font-semibold text-xl leading-6;
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  * {
+    @apply box-border select-none;
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #f9fafb;
-  color: #111827;
-}
-
-* {
-  box-sizing: border-box;
+@layer utilities {
+  
 }

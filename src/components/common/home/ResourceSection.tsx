@@ -9,18 +9,20 @@ type ResourceSection = {
 const ResourceSection = () => {
 
     return (
-        <div className="">
-            <div className="flex justify-between">
-                <h3 className="">이름</h3>
-                <p className="">4</p>
-                <Plus className="w-2.5 h-2.5" />
+        <div className="flex flex-col min-x-[280px]">
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center space-x-2">
+                    <p className="font-medium text-gray-900">공통</p>
+                    <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">4</span>
+                </div>
+                <Plus className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-700" />
             </div>
             
 
             {/* 메인 콘텐츠 */}
             <div className="flex-1 p-6 space-y-4">
                 {/* Preview 섹션 */}
-                <div className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="bg-white rounded-lg p-4 border border-[#E5E5E5]">
                     <div className="flex items-center space-x-2 mb-3">
                     <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

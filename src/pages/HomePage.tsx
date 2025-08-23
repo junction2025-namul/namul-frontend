@@ -44,14 +44,14 @@ const DashboardPage: React.FC = () => {
             <div className="px-6 py-4 border-b border-[#E5E5E5]">
                 <div className="flex items-center space-x-2">
                     <div className="w-6 h-6 bg-black rounded"></div>
-                    <span className="font-semibold text-gray-900">Team Namul</span>
+                    <span className="font-inter">Team Namul</span>
                 </div>
             </div>
 
             {/* 네비게이션 메뉴 */}
             <nav className="mt-6">
             <div className="px-6 py-2">
-                <div className="flex items-center space-x-3 text-gray-700 hover:text-gray-900 cursor-pointer">
+                <div className="flex items-center space-x-3 cursor-pointer">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                 </svg>
@@ -59,7 +59,7 @@ const DashboardPage: React.FC = () => {
                 </div>
             </div>
             <div className="px-6 py-2">
-                <div className="flex items-center space-x-3 text-gray-700 hover:text-gray-900 cursor-pointer">
+                <div className="flex items-center space-x-3 cursor-pointer">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                 </svg>
@@ -73,7 +73,7 @@ const DashboardPage: React.FC = () => {
         <div className="flex-1 flex flex-col">
             {/* 상단 탭 바 */}
             <div className="bg-white border-b border-[#E5E5E5] p-4">
-                <h2 className="font-semibold">Home</h2>
+                <h1 className="font-semibold">Home</h1>
             </div>
 
             <ResourceSection />
