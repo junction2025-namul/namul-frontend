@@ -1,17 +1,16 @@
 import type { ApiResponse } from "./CommonProps";
 
-export type DataResponseProps = {
-    id: string;
-    name: string;
-    description: string;
+type DocumentData = {
+    docId: string;
+    title: string;
+    uploadDate: string;
+    newbieDoc: boolean;
 }
 
-export type DataRequestProps = {
-    id: string;
-    name: string;
-    description: string;
+export type DataResponseProps = {
+    categoryId: string;
+    category: string;
+    documentInfo: DocumentData[];
 }
 
 export type DataResponse = ApiResponse<DataResponseProps>;
-
-export type DataRequest = ApiResponse<DataRequestProps>;

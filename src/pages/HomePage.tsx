@@ -1,28 +1,81 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { dummyDashBoardCard } from '../mocks/dashboard';
 import type { DashboardCard } from '../types/DashBoardProps';
 import ic_folder from '../assets/icons/ic_folder.svg';
 import ResourceSection from '../components/common/home/ResourceSection';
+import { Plus } from 'lucide-react';
+import { useDataResponse } from '../hooks/useData';
+
+type Section = {
+    id: number;
+    title: string;
+}
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data, isLoading, isError } = useDataResponse();
+
+    // 입력창 표시 상태 추가
+    const [showInput, setShowInput] = useState(false);
+    const [categoryName, setCategoryName] = useState('');
+
+    // 입력창 영역을 참조하기 위한 ref
+    const inputRef = useRef<HTMLDivElement>(null);
 
     // Mock data - 실제로는 AI 분석 결과를 받아옴
     const [categories, setCategories] = useState<DashboardCard[]>(dummyDashBoardCard);
+    
+    // 여러 ResourceSection을 관리하는 상태
+    const [sections, setSections] = useState<Section[]>([
+        { id: 1, title: '공통' }
+    ]);
 
+    // 외부 클릭 감지
     useEffect(() => {
-        // AI 분석 시뮬레이션
-        const simulateAIAnalysis = async () => {
-        setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setIsLoading(false);
+        const handleClickOutside = (event: MouseEvent) => {
+            if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+                setShowInput(false);
+                setCategoryName('');
+            }
         };
 
-        simulateAIAnalysis();
-    }, []);
+        if (showInput) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showInput]);
+
+    // Plus 버튼 클릭 핸들러
+    const handlePlusClick = () => {
+        setShowInput(true);
+    };
+
+    // 입력창 제출 핸들러
+    const handleInputSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (categoryName.trim()) {
+            console.log('새 카테고리:', categoryName);
+            // 새로운 섹션 추가
+            const newSection = {
+                id: Date.now(),
+                title: categoryName
+            };
+            setSections(prev => [...prev, newSection]);
+            setCategoryName('');
+            setShowInput(false);
+        }
+    };
+
+    // 입력창 취소 핸들러
+    const handleInputCancel = () => {
+        setCategoryName('');
+        setShowInput(false);
+    };
 
     if (isLoading) {
         return (
@@ -50,33 +103,64 @@ const DashboardPage: React.FC = () => {
 
             {/* 네비게이션 메뉴 */}
             <nav className="mt-6">
-            <div className="px-6 py-2">
+            <div 
+                onClick={()=>navigate('/')}
+                className="px-6 py-2">
                 <div className="flex items-center space-x-3 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                </svg>
-                <span>Home</span>
+                <span>📁 Home</span>
                 </div>
             </div>
             <div className="px-6 py-2">
                 <div className="flex items-center space-x-3 cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-                </svg>
-                <span>Home</span>
+                <span>🔎 Tracking</span>
                 </div>
             </div>
             </nav>
         </div>
 
-        {/* 우측 메인 콘텐츠 영역 */}
-        <div className="flex-1 flex flex-col">
-            {/* 상단 탭 바 */}
-            <div className="bg-white border-b border-[#E5E5E5] p-4">
-                <h1 className="font-semibold">Home</h1>
-            </div>
+            {/* 우측 메인 콘텐츠 영역 */}
+            <div className="flex-1 flex flex-col">
+                {/* 상단 탭 바 */}
+                <div className="bg-white border-b border-[#E5E5E5] p-4 mb-3">
+                    <h1 className="font-semibold">📁 Home</h1>
+                </div>
 
-            <ResourceSection />
+                {/* 파트 섹션들 */}
+                <div className="flex items-start space-x-6 p-6">
+                    {sections.map((section) => (
+                        <ResourceSection 
+                            key={section.id}
+                            title={section.title}
+                        />
+                    ))}
+                    
+                    {/* Plus 버튼과 입력창 */}
+                    <div className="flex flex-col" ref={inputRef}>
+                        <Plus 
+                            onClick={handlePlusClick}
+                            className="w-5 h-5 mt-[15.5px] text-gray-500 cursor-pointer hover:text-gray-700" />
+                        {/* 입력창 - showInput이 true일 때만 표시 */}
+                        {showInput && (
+                            <div className="mt-2 p-3 min-w-[200px]">
+                                <form onSubmit={handleInputSubmit}>
+                                    <input
+                                        type="text"
+                                        value={categoryName}
+                                        onChange={(e) => setCategoryName(e.target.value)}
+                                        placeholder="카테고리 이름"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:border-transparent"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                handleInputCancel();
+                                            }
+                                        }}
+                                    />
+                                </form>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );
