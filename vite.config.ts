@@ -11,6 +11,7 @@ export default defineConfig({
            target: 'https://namul-backend-production-7a51.up.railway.app', // Railway 백엔드 서버
            changeOrigin: true,
            secure: true, // HTTPS 사용
+
          },
        },
      },
