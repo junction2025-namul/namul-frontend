@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage';
 import HomePage from './pages/HomePage';
 import TrackingPage from './pages/TrackingPage';
 import ChecklistPage from './pages/ChecklistPage';
+import OnboardingPage from './pages/OnboardingPage';
+import PreboardingPage from './pages/PreboardingPage';
 
 function App() {
   const queryClient = new QueryClient();
@@ -37,6 +39,14 @@ function App() {
         {
           path: "checklist",
           element: <ChecklistPage />,
+        },
+        {
+          path: "onboarding",
+          element: <OnboardingPage />,
+        },
+        {
+          path: "preboarding",
+          element: <PreboardingPage />,
         },
       ],
     },
