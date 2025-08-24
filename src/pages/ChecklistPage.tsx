@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Upload } from 'lucide-react';
 import MarkdownViewer from '../components/MarkdownViewer';
 
 // 1. 데이터 타입 및 목업 데이터 정의
@@ -23,6 +23,7 @@ const ChecklistPage: React.FC = () => {
     const [isChecklistPanelOpen, setIsChecklistPanelOpen] = useState(true);
     const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
     const headerRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const toggleChecklistPanel = () => {
         setIsChecklistPanelOpen(prev => !prev);
@@ -72,7 +73,18 @@ const ChecklistPage: React.FC = () => {
         // 여기에 실제 fetch 또는 axios API 호출 로직을 추가합니다.
     };
 
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
     const handleToggleCheck = (title: string, todoIndex: number) => {
+        const section = onboardingData.find(s => s.title === title);
+        const task = section?.todo[todoIndex];
+
+        if (task && task.includes('제출')) {
+            handleUploadClick();
+        }
+
         const newCheckedState = {
             ...checkedState,
             [title]: checkedState[title].map((c, i) => i === todoIndex ? !c : c)
@@ -106,12 +118,26 @@ const ChecklistPage: React.FC = () => {
         }
     };
 
+    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            // Handle the selected files
+            console.log(e.target.files);
+        }
+    };
+
     if (loading || !selectedItem) {
         return <div>Loading...</div>; // 또는 더 나은 로딩 컴포넌트
     }
 
     return (
         <div className="min-h-screen flex flex-col">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                className="hidden"
+                multiple
+            />
             <div className="bg-[#E5E5E5] border-b border-gray-200" ref={headerRef}>
                 <div className="text-center py-3">
                     <span className="text-sm text-gray-600">미리보기 화면입니다.</span>
