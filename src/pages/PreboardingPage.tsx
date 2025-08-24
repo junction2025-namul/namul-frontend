@@ -73,7 +73,18 @@ const PreboardingPage: React.FC = () => {
         // 여기에 실제 fetch 또는 axios API 호출 로직을 추가합니다.
     };
 
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
     const handleToggleCheck = (title: string, todoIndex: number) => {
+        const section = preboardingData.find(s => s.title === title);
+        const task = section?.todo[todoIndex];
+
+        if (task && task.includes('제출')) {
+            handleUploadClick();
+        }
+
         const newCheckedState = {
             ...checkedState,
             [title]: checkedState[title].map((c, i) => i === todoIndex ? !c : c)
@@ -105,10 +116,6 @@ const PreboardingPage: React.FC = () => {
             e.preventDefault();
             sendChatMessage();
         }
-    };
-
-    const handleUploadClick = () => {
-        fileInputRef.current?.click();
     };
 
     const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {

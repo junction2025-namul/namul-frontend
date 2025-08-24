@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Upload } from 'lucide-react';
 import MarkdownViewer from '../components/MarkdownViewer';
 
 // 1. 데이터 타입 및 목업 데이터 정의
@@ -23,6 +23,7 @@ const OnboardingPage: React.FC = () => {
     const [isChecklistPanelOpen, setIsChecklistPanelOpen] = useState(true);
     const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
     const headerRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const toggleChecklistPanel = () => {
         setIsChecklistPanelOpen(prev => !prev);
@@ -33,7 +34,6 @@ const OnboardingPage: React.FC = () => {
     };
 
     useEffect(() => {
-        // 온보딩 데이터 로드
         fetch('/onboarding.json')
             .then(response => response.json())
             .then((data: OnboardingItem[]) => {
@@ -46,20 +46,6 @@ const OnboardingPage: React.FC = () => {
                     }, {} as CheckedState)
                 );
                 setLoading(false);
-            });
-
-        // AI 채팅 데이터 로드
-        fetch('/aichatting.json')
-            .then(response => response.json())
-            .then((data) => {
-                setChatData(data);
-                // 초기 메시지들을 채팅에 추가
-                const initialMessages = data.messages.map((msg: any, index: number) => ({
-                    id: index + 1,
-                    text: msg.message,
-                    isUser: msg.role === 'user'
-                }));
-                setChatMessages(initialMessages);
             });
     }, []);
 
@@ -76,8 +62,9 @@ const OnboardingPage: React.FC = () => {
     }, [loading]);
 
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
-    const [chatData, setChatData] = useState<any>(null);
+    const [chatMessages, setChatMessages] = useState([
+        { id: 1, text: '안녕하세요! 온보딩 관련 도움이 필요하시면 언제든 말씀해주세요.', isUser: false }
+    ]);
 
     const handleApiPatch = (title: string, updatedTodos: boolean[]) => {
         console.log(`PATCH /api/onboarding/${title}`, {
@@ -86,7 +73,18 @@ const OnboardingPage: React.FC = () => {
         // 여기에 실제 fetch 또는 axios API 호출 로직을 추가합니다.
     };
 
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
     const handleToggleCheck = (title: string, todoIndex: number) => {
+        const section = onboardingData.find(s => s.title === title);
+        const task = section?.todo[todoIndex];
+
+        if (task && task.includes('제출')) {
+            handleUploadClick();
+        }
+
         const newCheckedState = {
             ...checkedState,
             [title]: checkedState[title].map((c, i) => i === todoIndex ? !c : c)
@@ -106,33 +104,9 @@ const OnboardingPage: React.FC = () => {
             setChatMessages(prev => [...prev, userMessage]);
             setChatInput('');
 
-            // 사용자 입력에 따른 다양한 AI 응답
             setTimeout(() => {
-                let aiResponse = '';
-                
-                // 사용자 입력에 따라 다른 응답 생성
-                if (chatInput.toLowerCase().includes('문서') || chatInput.toLowerCase().includes('찾')) {
-                    aiResponse = '네! 어떤 종류의 문서를 찾고 계신가요? 예를 들어 연차 신청, 개발 가이드, 회사 규정 등이 있어요. 구체적으로 말씀해주시면 바로 찾아드릴게요! 📚';
-                } else if (chatInput.toLowerCase().includes('연차') || chatInput.toLowerCase().includes('휴가')) {
-                    aiResponse = '연차/휴가 신청 관련 문서를 찾아드릴게요!\n\n📋 **휴가신청 가이드** - HR-2024-001.pdf\n   → 연차 신청부터 승인까지 전체 프로세스\n\n이 문서를 공유해드릴까요?';
-                } else if (chatInput.toLowerCase().includes('개발') || chatInput.toLowerCase().includes('코딩')) {
-                    aiResponse = '개발 관련 문서들을 찾아드릴게요!\n\n💻 **개발팀 코딩 컨벤션** - DEV-STD-2024-003.md\n🛠️ **개발환경 구축 가이드** - DEV-SETUP-2024-001.md\n🐳 **Docker 환경 설정** - DEV-DOCKER-2024-002.md\n\n어떤 문서가 가장 필요하신가요?';
-                } else if (chatInput.toLowerCase().includes('계정') || chatInput.toLowerCase().includes('권한')) {
-                    aiResponse = '계정 및 권한 관련 문서들을 찾아드릴게요!\n\n🔑 **사내 시스템 계정 발급 절차** - IT-PROC-001.pdf\n🔑 **GitLab 권한 신청 프로세스** - IT-ACCESS-2024-005.pdf\n💾 **DB 접근 권한 신청서** - DB-ACCESS-FORM-001.pdf\n\n어떤 권한이 필요하신가요?';
-                } else if (chatInput.toLowerCase().includes('조직') || chatInput.toLowerCase().includes('연락처')) {
-                    aiResponse = '조직도 및 연락처 관련 문서들을 찾아드릴게요!\n\n🏢 **회사 조직도** - ORG-CHART-2024-Q3.pdf\n📞 **임직원 연락처** - CONTACT-LIST-2024-008.xlsx\n\n이 문서들을 공유해드릴까요?';
-                } else if (chatInput.toLowerCase().includes('규정') || chatInput.toLowerCase().includes('시간')) {
-                    aiResponse = '회사 규정 및 근무시간 관련 문서들을 찾아드릴게요!\n\n🍽️ **근무시간 및 점심시간 안내** - WORK-SCHEDULE-2024-001.pdf\n📋 **신입사원 필수 규정집** - HR-REGULATION-2024-NEW.pdf\n\n이 문서들을 공유해드릴까요?';
-                } else {
-                    aiResponse = '네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요. 예를 들어:\n• 연차/휴가 신청\n• 개발 환경 설정\n• 계정 권한 신청\n• 회사 규정 확인\n\n무엇이든 편하게 말씀해주세요! 😊';
-                }
-
-                const aiMessage = { 
-                    id: Date.now() + 1, 
-                    text: aiResponse, 
-                    isUser: false 
-                };
-                setChatMessages(prev => [...prev, aiMessage]);
+                const aiResponse = { id: Date.now() + 1, text: '네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요.', isUser: false };
+                setChatMessages(prev => [...prev, aiResponse]);
             }, 1000);
         }
     };
@@ -144,12 +118,26 @@ const OnboardingPage: React.FC = () => {
         }
     };
 
+    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            // Handle the selected files
+            console.log(e.target.files);
+        }
+    };
+
     if (loading || !selectedItem) {
         return <div>Loading...</div>; // 또는 더 나은 로딩 컴포넌트
     }
 
     return (
         <div className="min-h-screen flex flex-col">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                className="hidden"
+                multiple
+            />
             <div className="bg-[#E5E5E5] border-b border-gray-200" ref={headerRef}>
                 <div className="bg-white px-6 py-3 flex justify-center items-center">
                     <div className="flex items-center space-x-4">
@@ -202,6 +190,15 @@ const OnboardingPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                            <div className="mt-4">
+                                <button
+                                    onClick={handleUploadClick}
+                                    className="w-full flex items-center justify-center px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                                >
+                                    <Upload size={16} className="mr-2" />
+                                    파일 업로드
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -228,7 +225,7 @@ const OnboardingPage: React.FC = () => {
                             <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-[400px]">
                                 {chatMessages.map((message) => (
                                     <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-sm px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                                        <div className={`max-w-[80%] px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
                                             <p className="text-sm whitespace-normal">{message.text}</p>
                                         </div>
                                     </div>
