@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Upload } from 'lucide-react';
+import { Send } from 'lucide-react';
 import MarkdownViewer from '../components/MarkdownViewer';
 
 // 1. 데이터 타입 및 목업 데이터 정의
 export interface OnboardingItem {
-  title: string;
-  markdown: string;
-  todo: string[];
+    title: string;
+    markdown: string;
+    todo: string[];
 }
 
 interface CheckedState {
@@ -20,20 +20,16 @@ const OnboardingPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [sidePanelInnerHeight, setSidePanelInnerHeight] = useState<number | string>('auto');
     const [mainAreaHeight, setMainAreaHeight] = useState<number | string>('auto');
-    const [isChecklistPanelOpen, setIsChecklistPanelOpen] = useState(true);
-    const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
     const headerRef = useRef<HTMLDivElement>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const toggleChecklistPanel = () => {
-        setIsChecklistPanelOpen(prev => !prev);
-    };
-
-    const toggleAiPanel = () => {
-        setIsAiPanelOpen(prev => !prev);
-    };
+    // 채팅 관련 상태
+    const [chatInput, setChatInput] = useState('');
+    const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
+    const [userMessageIndex, setUserMessageIndex] = useState(0);
+    const [aiResponses, setAiResponses] = useState<string[]>([]);
 
     useEffect(() => {
+        // 온보딩 데이터 로드
         fetch('/onboarding.json')
             .then(response => response.json())
             .then((data: OnboardingItem[]) => {
@@ -46,6 +42,21 @@ const OnboardingPage: React.FC = () => {
                     }, {} as CheckedState)
                 );
                 setLoading(false);
+            });
+
+        // AI 채팅 데이터 로드
+        fetch('/aichatting.json')
+            .then(response => response.json())
+            .then((data) => {
+                // assistant 메시지들만 추출하여 AI 응답 배열로 저장
+                const assistantMessages = data.messages
+                    .filter((msg: { role: string; message: string }) => msg.role === 'assistant')
+                    .map((msg: { role: string; message: string }) => msg.message);
+                setAiResponses(assistantMessages);
+                console.log('Loaded AI responses:', assistantMessages);
+            })
+            .catch(error => {
+                console.error('Error loading AI responses:', error);
             });
     }, []);
 
@@ -61,11 +72,6 @@ const OnboardingPage: React.FC = () => {
         }
     }, [loading]);
 
-    const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState([
-        { id: 1, text: '안녕하세요! 온보딩 관련 도움이 필요하시면 언제든 말씀해주세요.', isUser: false }
-    ]);
-
     const handleApiPatch = (title: string, updatedTodos: boolean[]) => {
         console.log(`PATCH /api/onboarding/${title}`, {
             todos: updatedTodos
@@ -73,18 +79,7 @@ const OnboardingPage: React.FC = () => {
         // 여기에 실제 fetch 또는 axios API 호출 로직을 추가합니다.
     };
 
-    const handleUploadClick = () => {
-        fileInputRef.current?.click();
-    };
-
     const handleToggleCheck = (title: string, todoIndex: number) => {
-        const section = onboardingData.find(s => s.title === title);
-        const task = section?.todo[todoIndex];
-
-        if (task && task.includes('제출')) {
-            handleUploadClick();
-        }
-
         const newCheckedState = {
             ...checkedState,
             [title]: checkedState[title].map((c, i) => i === todoIndex ? !c : c)
@@ -95,8 +90,8 @@ const OnboardingPage: React.FC = () => {
     
     const totalItems = onboardingData.reduce((sum, item) => sum + item.todo.length, 0);
     const completedItems = Object.values(checkedState)
-      .flat()
-      .filter(isChecked => isChecked).length;
+        .flat()
+        .filter(isChecked => isChecked).length;
 
     const sendChatMessage = () => {
         if (chatInput.trim()) {
@@ -104,9 +99,41 @@ const OnboardingPage: React.FC = () => {
             setChatMessages(prev => [...prev, userMessage]);
             setChatInput('');
 
+            // 사용자 메시지 인덱스에 따른 AI 응답
             setTimeout(() => {
-                const aiResponse = { id: Date.now() + 1, text: '네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요.', isUser: false };
+                // 현재 인덱스로 AI 응답 선택
+                const currentIndex = userMessageIndex;
+                let aiResponseText = '';
+                
+                // 디버깅을 위한 콘솔 로그
+                console.log('=== AI Response Debug ===');
+                console.log('Current userMessageIndex:', currentIndex);
+                console.log('aiResponses array:', aiResponses);
+                console.log('aiResponses.length:', aiResponses.length);
+                
+                // JSON에서 가져온 AI 응답들 중에서 인덱스에 맞는 응답 사용
+                if (currentIndex < aiResponses.length) {
+                    aiResponseText = aiResponses[currentIndex];
+                    console.log(`✅ Using response at index ${currentIndex}:`, aiResponseText);
+                } else {
+                    // 모든 응답을 다 사용한 경우 마지막 응답 반복
+                    aiResponseText = aiResponses[aiResponses.length - 1] || "네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요.";
+                    console.log(`🔄 Using fallback response (index ${currentIndex} >= ${aiResponses.length}):`, aiResponseText);
+                }
+
+                const aiResponse = { 
+                    id: Date.now() + 1, 
+                    text: aiResponseText, 
+                    isUser: false 
+                };
                 setChatMessages(prev => [...prev, aiResponse]);
+                
+                // 사용자 메시지 인덱스 증가
+                setUserMessageIndex(prev => {
+                    const newIndex = prev + 1;
+                    console.log(`📈 Updated userMessageIndex: ${prev} → ${newIndex}`);
+                    return newIndex;
+                });
             }, 1000);
         }
     };
@@ -118,37 +145,23 @@ const OnboardingPage: React.FC = () => {
         }
     };
 
-    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            // Handle the selected files
-            console.log(e.target.files);
-        }
-    };
-
     if (loading || !selectedItem) {
         return <div>Loading...</div>; // 또는 더 나은 로딩 컴포넌트
     }
 
     return (
         <div className="min-h-screen flex flex-col">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelected}
-                className="hidden"
-                multiple
-            />
             <div className="bg-[#E5E5E5] border-b border-gray-200" ref={headerRef}>
                 <div className="bg-white px-6 py-3 flex justify-center items-center">
                     <div className="flex items-center space-x-4">
-                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2 cursor-pointer" onClick={toggleChecklistPanel}>
+                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2">
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <span className="text-sm font-semibold text-gray-700">체크리스트</span>
                             <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
                                 {completedItems} / {totalItems}
                             </div>
                         </div>
-                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2 cursor-pointer" onClick={toggleAiPanel}>
+                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2">
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             <span className="text-sm font-semibold text-gray-700">온보딩 AI</span>
                         </div>
@@ -157,9 +170,9 @@ const OnboardingPage: React.FC = () => {
             </div>
 
             <div className="flex flex-1">
-                <div className={`bg-white border-r border-[#E5E5E5] transition-all duration-300 ease-in-out overflow-hidden ${isChecklistPanelOpen ? 'w-100' : 'w-0'}`}>
+                <div className="w-100 bg-white border-r border-[#E5E5E5]">
                     <div className="h-full p-6">
-                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col whitespace-nowrap" style={{ height: sidePanelInnerHeight }}>
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">체크리스트</h2>
                                 <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
@@ -190,15 +203,6 @@ const OnboardingPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4">
-                                <button
-                                    onClick={handleUploadClick}
-                                    className="w-full flex items-center justify-center px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
-                                >
-                                    <Upload size={16} className="mr-2" />
-                                    파일 업로드
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -216,17 +220,17 @@ const OnboardingPage: React.FC = () => {
                     ))}
                 </div>
 
-                <div className={`bg-white border-l border-[#E5E5E5] transition-all duration-300 ease-in-out overflow-hidden ${isAiPanelOpen ? 'w-100' : 'w-0'}`}>
+                <div className="w-100 bg-white border-l border-[#E5E5E5]">
                     <div className="h-full p-6">
-                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col whitespace-nowrap" style={{ height: sidePanelInnerHeight }}>
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
-                                <h2 className="text-xl font-semibold text-gray-900">온보딩 AI</h2>
+                                <h2 className="text-xl font-semibold text-gray-900">글쓰기 AI</h2>
                             </div>
                             <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-[400px]">
                                 {chatMessages.map((message) => (
                                     <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[80%] px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-                                            <p className="text-sm whitespace-normal">{message.text}</p>
+                                        <div className={`max-w-xs px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                                            <p className="text-sm whitespace-pre-line">{message.text}</p>
                                         </div>
                                     </div>
                                 ))}
