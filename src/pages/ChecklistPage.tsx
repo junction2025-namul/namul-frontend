@@ -193,6 +193,15 @@ const ChecklistPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                            <div className="mt-4">
+                                <button
+                                    onClick={handleUploadClick}
+                                    className="w-full flex items-center justify-center px-4 py-2 border border-dashed border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+                                >
+                                    <Upload size={16} className="mr-2" />
+                                    파일 업로드
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -219,7 +228,7 @@ const ChecklistPage: React.FC = () => {
                             <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-[400px]">
                                 {chatMessages.map((message) => (
                                     <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-sm px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                                        <div className={`max-w-[80%] px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
                                             <p className="text-sm whitespace-normal">{message.text}</p>
                                         </div>
                                     </div>

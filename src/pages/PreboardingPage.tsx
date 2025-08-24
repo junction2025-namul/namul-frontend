@@ -223,6 +223,12 @@ const PreboardingPage: React.FC = () => {
                                 ))}
                             </div>
                             <div className="flex items-center space-x-3">
+                                <button
+                                    onClick={handleUploadClick}
+                                    className="w-10 h-10 bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 transition-colors flex items-center justify-center"
+                                >
+                                    <Upload size={16} />
+                                </button>
                                 <input
                                     type="text"
                                     value={chatInput}
