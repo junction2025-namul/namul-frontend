@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import MarkdownViewer from '../components/MarkdownViewer';
 
@@ -9,11 +9,18 @@ export interface OnboardingItem {
   todo: string[];
 }
 
+interface CheckedState {
+    [key: string]: boolean[];
+}
+
 const ChecklistPage: React.FC = () => {
     const [onboardingData, setOnboardingData] = useState<OnboardingItem[]>([]);
     const [selectedItem, setSelectedItem] = useState<OnboardingItem | null>(null);
     const [checkedState, setCheckedState] = useState<CheckedState>({});
     const [loading, setLoading] = useState(true);
+    const [sidePanelInnerHeight, setSidePanelInnerHeight] = useState<number | string>('auto');
+    const [mainAreaHeight, setMainAreaHeight] = useState<number | string>('auto');
+    const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetch('/onboarding.json')
@@ -30,6 +37,18 @@ const ChecklistPage: React.FC = () => {
                 setLoading(false);
             });
     }, []);
+
+    useEffect(() => {
+        if (headerRef.current) {
+            const headerHeight = headerRef.current.offsetHeight;
+            const calculatedMainAreaHeight = window.innerHeight - headerHeight;
+            setMainAreaHeight(calculatedMainAreaHeight > 0 ? calculatedMainAreaHeight : 'auto');
+
+            const PADDING_IN_PX = 24 * 2; // p-6 = 1.5rem = 24px. top+bottom = 48px.
+            const calculatedSidePanelInnerHeight = calculatedMainAreaHeight - PADDING_IN_PX;
+            setSidePanelInnerHeight(calculatedSidePanelInnerHeight > 0 ? calculatedSidePanelInnerHeight : 'auto');
+        }
+    }, [loading]);
 
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([
@@ -83,7 +102,7 @@ const ChecklistPage: React.FC = () => {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <div className="bg-[#E5E5E5] border-b border-gray-200">
+            <div className="bg-[#E5E5E5] border-b border-gray-200" ref={headerRef}>
                 <div className="text-center py-3">
                     <span className="text-sm text-gray-600">미리보기 화면입니다.</span>
                 </div>
@@ -107,7 +126,7 @@ const ChecklistPage: React.FC = () => {
             <div className="flex flex-1">
                 <div className="w-100 bg-white border-r border-[#E5E5E5]">
                     <div className="h-full p-6">
-                        <div className="h-full bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col">
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">체크리스트</h2>
                                 <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
@@ -118,21 +137,23 @@ const ChecklistPage: React.FC = () => {
                                 {onboardingData.map((section) => (
                                     <div key={section.title} onClick={() => setSelectedItem(section)} className={`cursor-pointer p-2 rounded-lg ${selectedItem.title === section.title ? 'bg-blue-100' : ''}`}>
                                         <h3 className="text-md font-semibold text-gray-800 mb-3">{section.title}</h3>
-                                        <div className="space-y-3 pl-2">
-                                            {section.todo.map((task, index) => (
-                                                <div key={index} className="flex items-center space-x-3">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={checkedState[section.title]?.[index] || false}
-                                                        onChange={() => handleToggleCheck(section.title, index)}
-                                                        className="w-4 h-4 border border-[#D4D4D4] rounded-[4px] accent-blue-600"
-                                                    />
-                                                    <span className={`text-sm ${checkedState[section.title]?.[index] ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                                        {task}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        {section.todo && section.todo.length > 0 && (
+                                            <div className="space-y-3 pl-2">
+                                                {section.todo.map((task, index) => (
+                                                    <div key={index} className="flex items-center space-x-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={checkedState[section.title]?.[index] || false}
+                                                            onChange={() => handleToggleCheck(section.title, index)}
+                                                            className="w-4 h-4 border border-[#D4D4D4] rounded-[4px] accent-blue-600"
+                                                        />
+                                                        <span className={`text-sm ${checkedState[section.title]?.[index] ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                                            {task}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -140,17 +161,22 @@ const ChecklistPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 bg-white p-6">
-                    <MarkdownViewer 
-                        item={selectedItem} 
-                        checkedState={checkedState[selectedItem.title]}
-                        onToggle={(todoIndex) => handleToggleCheck(selectedItem.title, todoIndex)}
-                    />
+                <div className="flex-1 bg-white p-6 overflow-y-auto" style={{ height: mainAreaHeight }}>
+                    {onboardingData.map((item, index) => (
+                        <div key={item.title}>
+                            <MarkdownViewer
+                                item={item}
+                                checkedState={checkedState[item.title]}
+                                onToggle={(todoIndex) => handleToggleCheck(item.title, todoIndex)}
+                            />
+                            {index < onboardingData.length - 1 && <hr className="my-8 border-gray-200" />}
+                        </div>
+                    ))}
                 </div>
 
                 <div className="w-100 bg-white border-l border-[#E5E5E5]">
                     <div className="h-full p-6">
-                        <div className="h-full bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col">
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">글쓰기 AI</h2>
                             </div>
