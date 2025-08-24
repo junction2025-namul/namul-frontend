@@ -191,11 +191,11 @@ const TrackingPage: React.FC = () => {
         return true; // 'other' case
     });
 
-    // 디버깅을 위한 콘솔 로그
-    console.log('employees:', employees);
-    console.log('selectedTab:', selectedTab);
-    console.log('filteredEmployees:', filteredEmployees);
-    console.log('selectedEmployees:', selectedEmployees);
+    // 디버깅을 위한 콘솔 로그 (필요시에만 사용)
+    // console.log('employees:', employees);
+    // console.log('selectedTab:', selectedTab);
+    // console.log('filteredEmployees:', filteredEmployees);
+    // console.log('selectedEmployees:', selectedEmployees);
 
     const handleSelectAll = (checked: boolean) => {
         if (checked) {
@@ -206,11 +206,13 @@ const TrackingPage: React.FC = () => {
     };
 
     const handleSelectEmployee = (employeeId: number, checked: boolean) => {
-        if (checked) {
-            setSelectedEmployees(prev => [...prev, employeeId]);
-        } else {
-            setSelectedEmployees(prev => prev.filter(id => id !== employeeId));
-        }
+        setSelectedEmployees(prev => {
+            if (checked) {
+                return [...prev, employeeId];
+            } else {
+                return prev.filter(id => id !== employeeId);
+            }
+        });
     };
 
     const isAllSelected = filteredEmployees.length > 0 && selectedEmployees.length === filteredEmployees.length;
@@ -266,9 +268,41 @@ const TrackingPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex">
+        <div className="page-container min-h-screen flex">
+            <style>
+                {`
+                    input[type="checkbox"] {
+                        transform: none !important;
+                        transition: none !important;
+                    }
+                    input[type="checkbox"]:focus {
+                        transform: none !important;
+                        outline: none !important;
+                    }
+                    .table-container {
+                        overflow-x: auto;
+                        overflow-y: visible;
+                    }
+                    /* 레이아웃 안정성을 위한 추가 스타일 */
+                    .sidebar {
+                        width: 320px !important;
+                        min-width: 320px !important;
+                        max-width: 320px !important;
+                        flex-shrink: 0 !important;
+                    }
+                    .main-content {
+                        flex: 1 !important;
+                        min-width: 0 !important;
+                        overflow: hidden !important;
+                    }
+                    .page-container {
+                        width: 100vw !important;
+                        overflow-x: hidden !important;
+                    }
+                `}
+            </style>
             {/* 좌측 사이드바 */}
-            <div className="w-80 bg-white border-r border-[#E5E5E5]">
+            <div className="sidebar bg-white border-r border-[#E5E5E5]">
                 {/* 헤더 */}
                 {/* 헤더 */}
                 <div className="px-6 py-4 border-b border-[#E5E5E5]">
@@ -298,7 +332,7 @@ const TrackingPage: React.FC = () => {
             </div>
 
             {/* 우측 메인 콘텐츠 영역 */}
-            <div className="flex-1 flex flex-col">
+            <div className="main-content flex flex-col">
                 {/* 상단 헤더 */}
                 <div className="bg-white border-b border-[#E5E5E5] px-4 py-2 mb-3 flex justify-between items-center">
                     <h1 className="font-semibold text-xl">🔎 Tracking</h1>
@@ -347,8 +381,8 @@ const TrackingPage: React.FC = () => {
                 </div>
 
                 {/* 테이블 */}
-                <div className="flex-1 bg-white">
-                    <div className="overflow-x-auto">
+                <div className="flex-1 bg-white min-h-0">
+                    <div className="table-container">
                         <table className="w-full">
                             <thead className="bg-gray-50">
                                 <tr>
@@ -358,6 +392,7 @@ const TrackingPage: React.FC = () => {
                                         checked={isAllSelected}
                                         onChange={(e) => handleSelectAll(e.target.checked)}
                                         className="rounded border-gray-300 text-black bg-black checked:bg-black checked:border-black focus:ring-black"
+                                        style={{ transform: 'none' }}
                                     />
                                     </th>
                                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">구성원</th>
@@ -369,13 +404,14 @@ const TrackingPage: React.FC = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {filteredEmployees.map((employee) => (
-                                    <tr key={employee.id} className="hover:bg-gray-50">
+                                    <tr key={`employee-${employee.id}`} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedEmployees.includes(employee.id)}
                                                 onChange={(e) => handleSelectEmployee(employee.id, e.target.checked)}
                                                 className="rounded border-gray-300 text-black bg-black checked:bg-black checked:border-black focus:ring-black"
+                                                style={{ transform: 'none' }}
                                             />
                                         </td>
                                         <td className="px-6 py-4">
@@ -414,7 +450,7 @@ const TrackingPage: React.FC = () => {
 
                  {/* 선택된 직원 액션 바 */}
                  {selectedEmployees.length > 0 && (
-                     <div className="mx-[700px] mb-[10px] bg-gray-100 border border-gray-300 text-gray-800 px-6 py-3 flex justify-between items-center rounded-lg shadow-sm">
+                     <div className="mx-auto mb-[10px] bg-gray-100 border border-gray-300 text-gray-800 px-6 py-3 flex justify-between items-center rounded-lg shadow-sm max-w-2xl">
                          <span className="text-sm font-medium">
                              {selectedEmployees.length}명 선택됨
                          </span>
@@ -445,7 +481,7 @@ const TrackingPage: React.FC = () => {
 
              {/* Toast Message */}
              {showToast && (
-                 <div className="fixed right-[700px] transform -translate-x-1/2 bottom-10 bg-gray-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+                 <div className="fixed left-1/2 transform -translate-x-1/2 bottom-10 bg-gray-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
                      메일이 전송되었습니다!
                  </div>
              )}
