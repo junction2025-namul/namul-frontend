@@ -20,7 +20,17 @@ const ChecklistPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [sidePanelInnerHeight, setSidePanelInnerHeight] = useState<number | string>('auto');
     const [mainAreaHeight, setMainAreaHeight] = useState<number | string>('auto');
+    const [isChecklistPanelOpen, setIsChecklistPanelOpen] = useState(true);
+    const [isAiPanelOpen, setIsAiPanelOpen] = useState(true);
     const headerRef = useRef<HTMLDivElement>(null);
+
+    const toggleChecklistPanel = () => {
+        setIsChecklistPanelOpen(prev => !prev);
+    };
+
+    const toggleAiPanel = () => {
+        setIsAiPanelOpen(prev => !prev);
+    };
 
     useEffect(() => {
         fetch('/onboarding.json')
@@ -108,14 +118,14 @@ const ChecklistPage: React.FC = () => {
                 </div>
                 <div className="bg-white px-6 py-3 flex justify-center items-center">
                     <div className="flex items-center space-x-4">
-                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2">
+                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2 cursor-pointer" onClick={toggleChecklistPanel}>
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             <span className="text-sm font-semibold text-gray-700">체크리스트</span>
                             <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
                                 {completedItems} / {totalItems}
                             </div>
                         </div>
-                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2">
+                        <div className="bg-gray-100 rounded-lg px-4 py-2 flex items-center space-x-2 cursor-pointer" onClick={toggleAiPanel}>
                             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             <span className="text-sm font-semibold text-gray-700">온보딩 AI</span>
                         </div>
@@ -124,9 +134,9 @@ const ChecklistPage: React.FC = () => {
             </div>
 
             <div className="flex flex-1">
-                <div className="w-100 bg-white border-r border-[#E5E5E5]">
+                <div className={`bg-white border-r border-[#E5E5E5] transition-all duration-300 ease-in-out overflow-hidden ${isChecklistPanelOpen ? 'w-100' : 'w-0'}`}>
                     <div className="h-full p-6">
-                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col whitespace-nowrap" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
                                 <h2 className="text-xl font-semibold text-gray-900">체크리스트</h2>
                                 <div className="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm">
@@ -174,17 +184,17 @@ const ChecklistPage: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="w-100 bg-white border-l border-[#E5E5E5]">
+                <div className={`bg-white border-l border-[#E5E5E5] transition-all duration-300 ease-in-out overflow-hidden ${isAiPanelOpen ? 'w-100' : 'w-0'}`}>
                     <div className="h-full p-6">
-                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col" style={{ height: sidePanelInnerHeight }}>
+                        <div className="bg-white rounded-lg border border-[#E5E5E5] p-6 flex flex-col whitespace-nowrap" style={{ height: sidePanelInnerHeight }}>
                             <div className="flex justify-between border-b border-[#E5E5E5] items-center pb-4 mb-6">
-                                <h2 className="text-xl font-semibold text-gray-900">글쓰기 AI</h2>
+                                <h2 className="text-xl font-semibold text-gray-900">온보딩 AI</h2>
                             </div>
                             <div className="flex-1 overflow-y-auto space-y-4 mb-4 min-h-[400px]">
                                 {chatMessages.map((message) => (
                                     <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-xs px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
-                                            <p className="text-sm">{message.text}</p>
+                                        <div className={`max-w-sm px-4 py-2 rounded-lg ${message.isUser ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'}`}>
+                                            <p className="text-sm whitespace-normal">{message.text}</p>
                                         </div>
                                     </div>
                                 ))}
