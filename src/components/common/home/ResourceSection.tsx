@@ -35,16 +35,19 @@ const ResourceSection = ({ title }: ResourceSection) => {
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     
+    // 각 섹션별 고유한 localStorage 키 생성
+    const sectionKey = `section_${title}`;
+    
     // localStorage 관련 함수들
     const saveGuideStateToStorage = (isCreated: boolean, isCreating: boolean) => {
-        localStorage.setItem('guideState', JSON.stringify({
+        localStorage.setItem(`${sectionKey}_guideState`, JSON.stringify({
             isGuideCreated: isCreated,
             isCreatingGuide: isCreating
         }));
     };
 
     const loadGuideStateFromStorage = () => {
-        const stored = localStorage.getItem('guideState');
+        const stored = localStorage.getItem(`${sectionKey}_guideState`);
         if (stored) {
             const parsed = JSON.parse(stored);
             return {
@@ -56,11 +59,11 @@ const ResourceSection = ({ title }: ResourceSection) => {
     };
 
     const saveCardsToStorage = (cardsData: Card[]) => {
-        localStorage.setItem('uploadedCards', JSON.stringify(cardsData));
+        localStorage.setItem(`${sectionKey}_uploadedCards`, JSON.stringify(cardsData));
     };
 
     const loadCardsFromStorage = (): Card[] => {
-        const stored = localStorage.getItem('uploadedCards');
+        const stored = localStorage.getItem(`${sectionKey}_uploadedCards`);
         return stored ? JSON.parse(stored) : [];
     };
 
@@ -123,6 +126,7 @@ const ResourceSection = ({ title }: ResourceSection) => {
         }, 1000);
     };
 
+
     return (
         <div className="grid grid-flex flex-col min-w-[350px] px-6">
             <div className="flex justify-between items-center mb-3">
@@ -144,7 +148,7 @@ const ResourceSection = ({ title }: ResourceSection) => {
                         <div className="flex w-full items-center justify-between">
                             <div 
                                 onClick={handleGuideClick}
-                                className={`h-[52px] rounded-lg px-4 border border-[#E5E5E5] shadow-sm cursor-pointer hover:shadow-md transition-all duration-300 ${
+                                className={`w-full h-[52px] rounded-lg px-4 border border-[#E5E5E5] shadow-sm cursor-pointer hover:shadow-md transition-all duration-300 ${
                                     isGuideCreated 
                                         ? 'bg-white text-[#18181B]' 
                                         : 'bg-black text-white'
@@ -165,10 +169,7 @@ const ResourceSection = ({ title }: ResourceSection) => {
                                     <span className="font-medium">
                                         {isCreatingGuide ? (
                                             <div className="flex items-center space-x-2">
-                                                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
+                                                
                                                 <span>Creating...</span>
                                             </div>
                                         ) : isGuideCreated ? (
@@ -217,5 +218,6 @@ const ResourceSection = ({ title }: ResourceSection) => {
             </div> 
         </div>
     );
+    
 }
 export default ResourceSection;
