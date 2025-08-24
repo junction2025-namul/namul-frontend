@@ -34,7 +34,7 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ item, checkedState, onT
                   onChange={() => onToggle(index)}
                   className="w-4 h-4 mr-3 accent-blue-600"
                 />
-                <span className={`text-sm ${checkedState[index] ? 'line-through text-gray-500' : ''}`}>
+                <span className={`text-md ${checkedState[index] ? 'line-through text-gray-500' : ''}`}>
                   {task}
                 </span>
               </li>

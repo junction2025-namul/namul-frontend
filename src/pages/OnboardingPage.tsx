@@ -22,6 +22,12 @@ const OnboardingPage: React.FC = () => {
     const [mainAreaHeight, setMainAreaHeight] = useState<number | string>('auto');
     const headerRef = useRef<HTMLDivElement>(null);
 
+    // 채팅 관련 상태
+    const [chatInput, setChatInput] = useState('');
+    const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
+    const [userMessageIndex, setUserMessageIndex] = useState(0);
+    const [aiResponses, setAiResponses] = useState<string[]>([]);
+
     useEffect(() => {
         // 온보딩 데이터 로드
         fetch('/onboarding.json')
@@ -47,6 +53,10 @@ const OnboardingPage: React.FC = () => {
                     .filter((msg: { role: string; message: string }) => msg.role === 'assistant')
                     .map((msg: { role: string; message: string }) => msg.message);
                 setAiResponses(assistantMessages);
+                console.log('Loaded AI responses:', assistantMessages);
+            })
+            .catch(error => {
+                console.error('Error loading AI responses:', error);
             });
     }, []);
 
@@ -61,11 +71,6 @@ const OnboardingPage: React.FC = () => {
             setSidePanelInnerHeight(calculatedSidePanelInnerHeight > 0 ? calculatedSidePanelInnerHeight : 'auto');
         }
     }, [loading]);
-
-    const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
-    const [userMessageIndex, setUserMessageIndex] = useState(0);
-    const [aiResponses, setAiResponses] = useState<string[]>([]);
 
     const handleApiPatch = (title: string, updatedTodos: boolean[]) => {
         console.log(`PATCH /api/onboarding/${title}`, {
@@ -96,21 +101,24 @@ const OnboardingPage: React.FC = () => {
 
             // 사용자 메시지 인덱스에 따른 AI 응답
             setTimeout(() => {
+                // 현재 인덱스로 AI 응답 선택
+                const currentIndex = userMessageIndex;
                 let aiResponseText = '';
                 
                 // 디버깅을 위한 콘솔 로그
-                console.log('userMessageIndex:', userMessageIndex);
-                console.log('aiResponses:', aiResponses);
+                console.log('=== AI Response Debug ===');
+                console.log('Current userMessageIndex:', currentIndex);
+                console.log('aiResponses array:', aiResponses);
                 console.log('aiResponses.length:', aiResponses.length);
                 
                 // JSON에서 가져온 AI 응답들 중에서 인덱스에 맞는 응답 사용
-                if (userMessageIndex < aiResponses.length) {
-                    aiResponseText = aiResponses[userMessageIndex];
-                    console.log('Selected response:', aiResponseText);
+                if (currentIndex < aiResponses.length) {
+                    aiResponseText = aiResponses[currentIndex];
+                    console.log(`✅ Using response at index ${currentIndex}:`, aiResponseText);
                 } else {
                     // 모든 응답을 다 사용한 경우 마지막 응답 반복
                     aiResponseText = aiResponses[aiResponses.length - 1] || "네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요.";
-                    console.log('Using fallback response:', aiResponseText);
+                    console.log(`🔄 Using fallback response (index ${currentIndex} >= ${aiResponses.length}):`, aiResponseText);
                 }
 
                 const aiResponse = { 
@@ -121,7 +129,11 @@ const OnboardingPage: React.FC = () => {
                 setChatMessages(prev => [...prev, aiResponse]);
                 
                 // 사용자 메시지 인덱스 증가
-                setUserMessageIndex(prev => prev + 1);
+                setUserMessageIndex(prev => {
+                    const newIndex = prev + 1;
+                    console.log(`📈 Updated userMessageIndex: ${prev} → ${newIndex}`);
+                    return newIndex;
+                });
             }, 1000);
         }
     };
