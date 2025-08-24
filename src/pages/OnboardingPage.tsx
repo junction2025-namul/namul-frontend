@@ -4,9 +4,9 @@ import MarkdownViewer from '../components/MarkdownViewer';
 
 // 1. 데이터 타입 및 목업 데이터 정의
 export interface OnboardingItem {
-  title: string;
-  markdown: string;
-  todo: string[];
+    title: string;
+    markdown: string;
+    todo: string[];
 }
 
 interface CheckedState {
@@ -42,14 +42,11 @@ const OnboardingPage: React.FC = () => {
         fetch('/aichatting.json')
             .then(response => response.json())
             .then((data) => {
-                setChatData(data);
-                // 초기 메시지들을 채팅에 추가
-                const initialMessages = data.messages.map((msg: any, index: number) => ({
-                    id: index + 1,
-                    text: msg.message,
-                    isUser: msg.role === 'user'
-                }));
-                setChatMessages(initialMessages);
+                // assistant 메시지들만 추출하여 AI 응답 배열로 저장
+                const assistantMessages = data.messages
+                    .filter((msg: { role: string; message: string }) => msg.role === 'assistant')
+                    .map((msg: { role: string; message: string }) => msg.message);
+                setAiResponses(assistantMessages);
             });
     }, []);
 
@@ -67,7 +64,8 @@ const OnboardingPage: React.FC = () => {
 
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState<Array<{id: number, text: string, isUser: boolean}>>([]);
-    const [chatData, setChatData] = useState<any>(null);
+    const [userMessageIndex, setUserMessageIndex] = useState(0);
+    const [aiResponses, setAiResponses] = useState<string[]>([]);
 
     const handleApiPatch = (title: string, updatedTodos: boolean[]) => {
         console.log(`PATCH /api/onboarding/${title}`, {
@@ -87,8 +85,8 @@ const OnboardingPage: React.FC = () => {
     
     const totalItems = onboardingData.reduce((sum, item) => sum + item.todo.length, 0);
     const completedItems = Object.values(checkedState)
-      .flat()
-      .filter(isChecked => isChecked).length;
+        .flat()
+        .filter(isChecked => isChecked).length;
 
     const sendChatMessage = () => {
         if (chatInput.trim()) {
@@ -96,33 +94,34 @@ const OnboardingPage: React.FC = () => {
             setChatMessages(prev => [...prev, userMessage]);
             setChatInput('');
 
-            // 사용자 입력에 따른 다양한 AI 응답
+            // 사용자 메시지 인덱스에 따른 AI 응답
             setTimeout(() => {
-                let aiResponse = '';
+                let aiResponseText = '';
                 
-                // 사용자 입력에 따라 다른 응답 생성
-                if (chatInput.toLowerCase().includes('문서') || chatInput.toLowerCase().includes('찾')) {
-                    aiResponse = '네! 어떤 종류의 문서를 찾고 계신가요? 예를 들어 연차 신청, 개발 가이드, 회사 규정 등이 있어요. 구체적으로 말씀해주시면 바로 찾아드릴게요! 📚';
-                } else if (chatInput.toLowerCase().includes('연차') || chatInput.toLowerCase().includes('휴가')) {
-                    aiResponse = '연차/휴가 신청 관련 문서를 찾아드릴게요!\n\n📋 **휴가신청 가이드** - HR-2024-001.pdf\n   → 연차 신청부터 승인까지 전체 프로세스\n\n이 문서를 공유해드릴까요?';
-                } else if (chatInput.toLowerCase().includes('개발') || chatInput.toLowerCase().includes('코딩')) {
-                    aiResponse = '개발 관련 문서들을 찾아드릴게요!\n\n💻 **개발팀 코딩 컨벤션** - DEV-STD-2024-003.md\n🛠️ **개발환경 구축 가이드** - DEV-SETUP-2024-001.md\n🐳 **Docker 환경 설정** - DEV-DOCKER-2024-002.md\n\n어떤 문서가 가장 필요하신가요?';
-                } else if (chatInput.toLowerCase().includes('계정') || chatInput.toLowerCase().includes('권한')) {
-                    aiResponse = '계정 및 권한 관련 문서들을 찾아드릴게요!\n\n🔑 **사내 시스템 계정 발급 절차** - IT-PROC-001.pdf\n🔑 **GitLab 권한 신청 프로세스** - IT-ACCESS-2024-005.pdf\n💾 **DB 접근 권한 신청서** - DB-ACCESS-FORM-001.pdf\n\n어떤 권한이 필요하신가요?';
-                } else if (chatInput.toLowerCase().includes('조직') || chatInput.toLowerCase().includes('연락처')) {
-                    aiResponse = '조직도 및 연락처 관련 문서들을 찾아드릴게요!\n\n🏢 **회사 조직도** - ORG-CHART-2024-Q3.pdf\n📞 **임직원 연락처** - CONTACT-LIST-2024-008.xlsx\n\n이 문서들을 공유해드릴까요?';
-                } else if (chatInput.toLowerCase().includes('규정') || chatInput.toLowerCase().includes('시간')) {
-                    aiResponse = '회사 규정 및 근무시간 관련 문서들을 찾아드릴게요!\n\n🍽️ **근무시간 및 점심시간 안내** - WORK-SCHEDULE-2024-001.pdf\n📋 **신입사원 필수 규정집** - HR-REGULATION-2024-NEW.pdf\n\n이 문서들을 공유해드릴까요?';
+                // 디버깅을 위한 콘솔 로그
+                console.log('userMessageIndex:', userMessageIndex);
+                console.log('aiResponses:', aiResponses);
+                console.log('aiResponses.length:', aiResponses.length);
+                
+                // JSON에서 가져온 AI 응답들 중에서 인덱스에 맞는 응답 사용
+                if (userMessageIndex < aiResponses.length) {
+                    aiResponseText = aiResponses[userMessageIndex];
+                    console.log('Selected response:', aiResponseText);
                 } else {
-                    aiResponse = '네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요. 예를 들어:\n• 연차/휴가 신청\n• 개발 환경 설정\n• 계정 권한 신청\n• 회사 규정 확인\n\n무엇이든 편하게 말씀해주세요! 😊';
+                    // 모든 응답을 다 사용한 경우 마지막 응답 반복
+                    aiResponseText = aiResponses[aiResponses.length - 1] || "네, 도움이 필요하시군요! 어떤 부분에서 도움이 필요하신지 더 자세히 말씀해주세요.";
+                    console.log('Using fallback response:', aiResponseText);
                 }
 
-                const aiMessage = { 
+                const aiResponse = { 
                     id: Date.now() + 1, 
-                    text: aiResponse, 
+                    text: aiResponseText, 
                     isUser: false 
                 };
-                setChatMessages(prev => [...prev, aiMessage]);
+                setChatMessages(prev => [...prev, aiResponse]);
+                
+                // 사용자 메시지 인덱스 증가
+                setUserMessageIndex(prev => prev + 1);
             }, 1000);
         }
     };
