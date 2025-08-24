@@ -8,7 +8,6 @@ type Employee = {
     id: number;
     name: string;
     email: string;
-    job: string;
     department: string;
     status: 'onboarding' | 'scheduled';
     progress: string;
@@ -37,48 +36,146 @@ const TrackingPage: React.FC = () => {
     const initialEmployees: Employee[] = [
         {
             id: 1,
-            name: 'Emily Johnson',
-            email: 'johnson@example.com',
-            job: '프로덕트 디자이너',
-            department: '프로덕트',
+            name: '김민수',
+            email: 'kim.minsu@company.com',
+            department: 'Engineering',
             status: 'onboarding',
-            progress: '60% (6/10)',
-            hireDate: '25/12/12 (D+12)',
+            progress: '80% (8/10)',
+            hireDate: '15/12/12 (D+22)',
             hasNotification: true
         },
         {
             id: 2,
-            name: 'Emily Johnson',
-            email: 'johnson@example.com',
-            job: '프로덕트 디자이너',
-            department: '프로덕트',
+            name: '이지영',
+            email: 'lee.jiyoung@company.com',
+            department: 'Design',
             status: 'onboarding',
             progress: '60% (6/10)',
-            hireDate: '25/12/12 (D+12)'
+            hireDate: '20/12/12 (D+17)'
         },
         {
             id: 3,
-            name: 'Emily Johnson',
-            email: 'johnson@example.com',
-            job: '프로덕트 디자이너',
-            department: '프로덕트',
-            status: 'scheduled',
-            progress: '미전송',
-            hireDate: '2025/12/12'
+            name: '박준호',
+            email: 'park.junho@company.com',
+            department: 'Engineering',
+            status: 'onboarding',
+            progress: '40% (4/10)',
+            hireDate: '25/12/12 (D+12)'
         },
         {
             id: 4,
-            name: 'Emily Johnson',
-            email: 'johnson@example.com',
-            job: '프로덕트 디자이너',
-            department: '프로덕트',
+            name: '정수진',
+            email: 'jung.sujin@company.com',
+            department: 'Product/Business',
+            status: 'onboarding',
+            progress: '90% (9/10)',
+            hireDate: '10/12/12 (D+27)'
+        },
+        {
+            id: 5,
+            name: '최동현',
+            email: 'choi.donghyun@company.com',
+            department: 'Product/Business',
+            status: 'onboarding',
+            progress: '30% (3/10)',
+            hireDate: '28/12/12 (D+9)'
+        },
+        {
+            id: 6,
+            name: '한미영',
+            email: 'han.miyeong@company.com',
+            department: 'Sales/Marketing',
             status: 'scheduled',
             progress: '미전송',
-            hireDate: '2025/12/12'
+            hireDate: '2025/01/15'
+        },
+        {
+            id: 7,
+            name: '송태현',
+            email: 'song.taehyeon@company.com',
+            department: 'Engineering',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/01/20'
+        },
+        {
+            id: 8,
+            name: '윤서연',
+            email: 'yoon.seoyeon@company.com',
+            department: 'Engineering',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/01/25'
+        },
+        {
+            id: 9,
+            name: '강현우',
+            email: 'kang.hyunwoo@company.com',
+            department: 'Engineering',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/02/01'
+        },
+        {
+            id: 10,
+            name: '임지은',
+            email: 'lim.jieun@company.com',
+            department: 'Sales/Marketing',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/02/05'
+        },
+        {
+            id: 11,
+            name: '오승준',
+            email: 'oh.seungjun@company.com',
+            department: 'Engineering',
+            status: 'onboarding',
+            progress: '70% (7/10)',
+            hireDate: '18/12/12 (D+19)'
+        },
+        {
+            id: 12,
+            name: '배수아',
+            email: 'bae.sua@company.com',
+            department: 'Design',
+            status: 'onboarding',
+            progress: '50% (5/10)',
+            hireDate: '22/12/12 (D+15)'
+        },
+        {
+            id: 13,
+            name: '조현민',
+            email: 'jo.hyunmin@company.com',
+            department: 'Engineering',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/02/10'
+        },
+        {
+            id: 14,
+            name: '신유진',
+            email: 'shin.yujin@company.com',
+            department: 'Sales/Marketing',
+            status: 'scheduled',
+            progress: '미전송',
+            hireDate: '2025/02/15'
+        },
+        {
+            id: 15,
+            name: '권도현',
+            email: 'kwon.dohyun@company.com',
+            department: 'Engineering',
+            status: 'onboarding',
+            progress: '20% (2/10)',
+            hireDate: '30/12/12 (D+7)'
         }
     ];
 
     const [employees, setEmployees] = useState<Employee[]>(() => {
+        // localStorage 초기화 (새로운 목 데이터를 강제로 로드하기 위해)
+        localStorage.removeItem('trackingEmployees');
+        
         const storedEmployees = loadEmployeesFromStorage();
         return storedEmployees || initialEmployees;
     });
@@ -122,29 +219,24 @@ const TrackingPage: React.FC = () => {
     const handleAddEmployee = (employeeData: {
         name: string;
         email: string;
-        job: string;
+        expectedStartDate: string;
         department: string;
-        status: 'onboarding' | 'scheduled';
-        hireDate: string;
+        career: string;
     }) => {
-        // 날짜 형식 변환 (YYYY-MM-DD -> YYYY/MM/DD)
+        // 날짜 형식 변환 (YYYY/MM/DD -> YYYY/MM/DD)
         const formatDate = (dateString: string) => {
-            const date = new Date(dateString);
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}/${month}/${day}`;
+            // 이미 YYYY/MM/DD 형식이므로 그대로 반환
+            return dateString;
         };
 
         const newEmployee: Employee = {
             id: Date.now(),
             name: employeeData.name,
             email: employeeData.email,
-            job: employeeData.job,
             department: employeeData.department,
-            status: employeeData.status,
-            progress: employeeData.status === 'onboarding' ? '0% (0/10)' : '미전송',
-            hireDate: formatDate(employeeData.hireDate)
+            status: 'scheduled', // 기본값으로 scheduled 설정
+            progress: '미전송',
+            hireDate: formatDate(employeeData.expectedStartDate)
         };
         
         setEmployees(prev => [...prev, newEmployee]);
@@ -160,6 +252,7 @@ const TrackingPage: React.FC = () => {
 
     // 메일 전송 핸들러
     const handleSendOnboardingEmail = () => {
+        setSelectedEmployees([]); // 선택된 직원들 초기화하여 액션 바 숨김
         setShowToast(true);
         setTimeout(() => {
             setShowToast(false);
@@ -295,7 +388,7 @@ const TrackingPage: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-900">
-                                            {employee.job}/{employee.department}
+                                            {employee.department}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
@@ -321,7 +414,7 @@ const TrackingPage: React.FC = () => {
 
                  {/* 선택된 직원 액션 바 */}
                  {selectedEmployees.length > 0 && (
-                     <div className="mx-[500px] mb-[10px] bg-gray-100 border border-gray-300 text-gray-800 px-6 py-3 flex justify-between items-center rounded-lg shadow-sm">
+                     <div className="mx-[700px] mb-[10px] bg-gray-100 border border-gray-300 text-gray-800 px-6 py-3 flex justify-between items-center rounded-lg shadow-sm">
                          <span className="text-sm font-medium">
                              {selectedEmployees.length}명 선택됨
                          </span>
@@ -352,7 +445,7 @@ const TrackingPage: React.FC = () => {
 
              {/* Toast Message */}
              {showToast && (
-                 <div className="fixed right-[450px] transform -translate-x-1/2 bottom-20 bg-gray-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+                 <div className="fixed right-[700px] transform -translate-x-1/2 bottom-10 bg-gray-600 text-white px-6 py-3 rounded-lg shadow-lg z-50">
                      메일이 전송되었습니다!
                  </div>
              )}
