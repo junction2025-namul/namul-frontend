@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, FileText, Link, Mountain, Upload } from 'lucide-react';
-import { useUploadDocument, fileToBase64 } from '../../../hooks/useUpload';
 
 type Card = {
     id: number;
@@ -14,8 +13,8 @@ type Card = {
 type UploadModalProps = {
     onAddCard: (card: Omit<Card, 'id'>) => void;
     onClose: () => void;
-    categoryId: string; // API 연결을 위해 추가
-    uploadedBy: string; // API 연결을 위해 추가
+    categoryId: string;
+    uploadedBy: string;
 }
 
 const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModalProps) => {
@@ -25,9 +24,7 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
     const [preShare, setPreShare] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [linkUrl, setLinkUrl] = useState('');
-
-    // API 뮤테이션 훅 사용
-    const { mutate: uploadDocument, isLoading, isError, error } = useUploadDocument();
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -56,7 +53,6 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
     };
 
     const handleUpload = async () => {
-        let fileContent = '';
         let cardName = '';
 
         if (activeTab === 'file') {
@@ -64,49 +60,55 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                 alert('파일을 선택해주세요.');
                 return;
             }
-            fileContent = await fileToBase64(selectedFile);
             cardName = selectedFile.name;
         } else {
             if (!linkUrl.trim()) {
                 alert('링크 URL을 입력해주세요.');
                 return;
             }
-            fileContent = linkUrl.trim();
             cardName = linkUrl.trim();
         }
 
-        // API 호출
-        uploadDocument({
-            file: fileContent,
-            request: {
-                categoryId: categoryId,
-                uploadedBy: uploadedBy,
-                newbieDoc: preShare,
-            },
-        }, {
-            onSuccess: (apiResponse) => {
-                console.log('API 업로드 성공:', apiResponse);
-                
-                // 성공 시 카드 추가
-                const newCard: Omit<Card, 'id'> = {
-                    name: cardName,
-                    description: additionalNotes || undefined,
-                    tag: preShare ? "미리 공유" : undefined,
-                    date: new Date().toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                    }),
-                    type: activeTab as "file" | "link"
-                };
-                onAddCard(newCard);
-                onClose();
-            },
-            onError: (err) => {
-                console.error("API 업로드 실패:", err);
-                alert(`업로드 실패: ${err.message}`);
-            }
-        });
+        setIsLoading(true);
+
+        try {
+            // API 연결하는 척 시뮬레이션
+            console.log('API 요청 시뮬레이션:', {
+                categoryId,
+                uploadedBy,
+                fileName: cardName,
+                newbieDoc: preShare
+            });
+
+            // 로딩 시뮬레이션 (1초)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // 성공 시뮬레이션
+            console.log('API 업로드 성공!');
+            
+            // 성공 시 카드 추가
+            const newCard: Omit<Card, 'id'> = {
+                name: cardName,
+                description: additionalNotes || undefined,
+                tag: preShare ? "미리 공유" : undefined,
+                date: new Date().toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                }),
+                type: activeTab as "file" | "link"
+            };
+            
+            console.log('새 카드 추가:', newCard);
+            onAddCard(newCard);
+            onClose();
+            
+        } catch (error) {
+            console.error('업로드 실패:', error);
+            alert('업로드에 실패했습니다.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -236,7 +238,6 @@ const UploadModal = ({ onAddCard, onClose, categoryId, uploadedBy }: UploadModal
                         <span>{isLoading ? '업로드 중...' : 'Upload'}</span>
                     </button>
                 </div>
-                {isError && <p className="text-red-500 mt-2 text-right">업로드 실패: {error?.message}</p>}
             </div>
         </div>
     );

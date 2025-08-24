@@ -100,7 +100,7 @@ const DashboardPage: React.FC = () => {
     return (
         <div className="min-h-screen flex">
         {/* 좌측 사이드바 */}
-        <div className="w-64 bg-white border-r border-[#E5E5E5]">
+        <div className="w-80 bg-white border-r border-[#E5E5E5]">
             {/* 헤더 */}
             <div className="px-6 py-4 border-b border-[#E5E5E5]">
                 <div className="flex items-center space-x-2">
@@ -114,15 +114,15 @@ const DashboardPage: React.FC = () => {
             <div 
                 onClick={()=>navigate('/')}
                 className="px-6 py-2">
-                <div className="flex items-center space-x-3 cursor-pointer bg-gray-100 text-black-600 rounded-lg">
-                <span>📁 Home</span>
+                <div className="flex items-center px-3 py-2 space-x-3 cursor-pointer bg-gray-100 text-black-600 rounded-lg">
+                <span className="font-medium">📁 Home</span>
                 </div>
             </div>
             <div 
                 onClick={() => navigate('/tracking')}
                 className="px-6 py-2">
-                <div className="flex items-center space-x-3 cursor-pointer">
-                <span>🔎 Tracking</span>
+                <div className="flex items-center px-3 py-2 space-x-3 cursor-pointer">
+                <span className="font-medium">🔎 Tracking</span>
                 </div>
             </div>
             </nav>

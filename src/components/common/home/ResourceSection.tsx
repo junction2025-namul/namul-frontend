@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import ResourceCard from "./ResourceCard";
 import { useState } from "react";
 import UploadModal from "../modal/UploadModal";
+import { useNavigate } from "react-router";
 import ic_upload from '../../../assets/icons/ic_upload.svg'
 import type { DocumentData } from "../../../types/DataProps";
 
@@ -30,9 +31,49 @@ type Card = {
 }
 
 const ResourceSection = ({ title }: ResourceSection) => {
-    
+    const navigate = useNavigate();
     const [showUploadModal, setShowUploadModal] = useState(false);
-    const [cards, setCards] = useState<Card[]>([]);
+    const [isUpdating, setIsUpdating] = useState(false);
+    
+    // 각 섹션별 고유한 localStorage 키 생성
+    const sectionKey = `section_${title}`;
+    
+    // localStorage 관련 함수들
+    const saveGuideStateToStorage = (isCreated: boolean, isCreating: boolean) => {
+        localStorage.setItem(`${sectionKey}_guideState`, JSON.stringify({
+            isGuideCreated: isCreated,
+            isCreatingGuide: isCreating
+        }));
+    };
+
+    const loadGuideStateFromStorage = () => {
+        const stored = localStorage.getItem(`${sectionKey}_guideState`);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return {
+                isGuideCreated: parsed.isGuideCreated || false,
+                isCreatingGuide: parsed.isCreatingGuide || false
+            };
+        }
+        return { isGuideCreated: false, isCreatingGuide: false };
+    };
+
+    const saveCardsToStorage = (cardsData: Card[]) => {
+        localStorage.setItem(`${sectionKey}_uploadedCards`, JSON.stringify(cardsData));
+    };
+
+    const loadCardsFromStorage = (): Card[] => {
+        const stored = localStorage.getItem(`${sectionKey}_uploadedCards`);
+        return stored ? JSON.parse(stored) : [];
+    };
+
+    // 초기 상태를 localStorage에서 불러오기
+    const initialGuideState = loadGuideStateFromStorage();
+    const [isGuideCreated, setIsGuideCreated] = useState(initialGuideState.isGuideCreated);
+    const [isCreatingGuide, setIsCreatingGuide] = useState(initialGuideState.isCreatingGuide);
+    
+    // 카드 상태를 localStorage에서 불러오기
+    const [cards, setCards] = useState<Card[]>(() => loadCardsFromStorage());
 
     const hasCards = cards.length > 0;
 
@@ -41,13 +82,33 @@ const ResourceSection = ({ title }: ResourceSection) => {
         setShowUploadModal(true);
     };
 
+    // Guide 버튼 클릭 핸들러
+    const handleGuideClick = () => {
+        if (!isGuideCreated) {
+            // 가이드 생성 중
+            setIsCreatingGuide(true);
+            saveGuideStateToStorage(false, true);
+            
+            setTimeout(() => {
+                setIsGuideCreated(true);
+                setIsCreatingGuide(false);
+                saveGuideStateToStorage(true, false);
+            }, 4000);
+        } else {
+            // CheckList 페이지로 이동
+            navigate('/checklist');
+        }
+    };
+
     // 모달에서 카드 추가 핸들러
     const handleAddCard = (newCard: Omit<Card, 'id'>) => {
         const cardWithId = {
             ...newCard,
             id: Date.now() // 고유 ID 생성
         };
-        setCards(prev => [...prev, cardWithId]);
+        const updatedCards = [...cards, cardWithId];
+        setCards(updatedCards);
+        saveCardsToStorage(updatedCards); // localStorage에 저장
         setShowUploadModal(false);
     };
 
@@ -56,8 +117,18 @@ const ResourceSection = ({ title }: ResourceSection) => {
         setShowUploadModal(false);
     };
 
+    // Update 버튼 클릭 핸들러
+    const handleUpdateClick = () => {
+        setIsUpdating(true);
+        // 3초 후 업데이트 완료
+        setTimeout(() => {
+            setIsUpdating(false);
+        }, 1000);
+    };
+
+
     return (
-        <div className="grid grid-flex flex-col max-w-[350px] px-6">
+        <div className="grid grid-flex flex-col min-w-[350px] px-6">
             <div className="flex justify-between items-center mb-3">
                 <div className="flex items-center space-x-2 py-[14px]">
                     <p className="text-[#404040] text-sm">{title}</p>
@@ -74,24 +145,44 @@ const ResourceSection = ({ title }: ResourceSection) => {
                 {hasCards ? (
                     <>
                         {/* Preview 섹션 */}
-                        <div className="flex items-center justify-between">
-                            <div className="bg-[#FAFAFA] text-[#18181B] h-[52px] rounded-lg p-4 border border-[#E5E5E5]">
-                                <div className="flex items-center space-x-2">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    <span className="font-semibold">Preview</span>
+                        <div className="flex w-full items-center justify-between">
+                            <div 
+                                onClick={handleGuideClick}
+                                className={`w-full h-[52px] rounded-lg px-4 border border-[#E5E5E5] shadow-sm cursor-pointer hover:shadow-md transition-all duration-300 ${
+                                    isGuideCreated 
+                                        ? 'bg-white text-[#18181B]' 
+                                        : 'bg-black text-white'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-2 h-full">
+                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                        isGuideCreated 
+                                            ? 'border-[#18181B]' 
+                                            : 'border-white'
+                                    }`}>
+                                        <div className={`w-2 h-2 rounded-full ${
+                                            isGuideCreated 
+                                                ? 'bg-[#18181B]' 
+                                                : 'bg-white'
+                                        }`}></div>
+                                    </div>
+                                    <span className="font-medium">
+                                        {isCreatingGuide ? (
+                                            <div className="flex items-center space-x-2">
+                                                
+                                                <span>Creating...</span>
+                                            </div>
+                                        ) : isGuideCreated ? (
+                                            "View Guide"
+                                        ) : (
+                                            "Create Guide"
+                                        )}
+                                    </span>
                                 </div>
                             </div>
-                            {/* Update 버튼 */}
-                            <button className="bg-gray-800 text-white px-3 py-1 h-[52px] rounded-lg flex items-center space-x-2 hover:bg-gray-700 transition-colors">
-                                <img src={ic_upload} />
-                                <span className="text-sm font-semibold">Update</span>
-                            </button>
                         </div>
                         {/* 파일 목록 */}
-                        <div className="space-y-3">
+                        <div className={`space-y-3 transition-opacity duration-300 ${isUpdating ? 'opacity-50' : 'opacity-100'}`}>
                             {cards.map((card) => (
                                 <ResourceCard
                                     key={card.id}
@@ -99,14 +190,13 @@ const ResourceSection = ({ title }: ResourceSection) => {
                                     description={card.description}
                                     tag={card.tag}
                                     date={card.date}
-                                    type={card.type}
                                 />
                             ))}
                         </div>
                     </>
                 ) : (
                     // 카드가 없을 때: Upload file 카드만 표시
-                    <div className="bg-[#FAFAFA] border-2 border-dashed border-[#E5E5E5] rounded-lg p-6 flex items-center justify-center">
+                    <div className="h-[52px] bg-[#FAFAFA] border-2 border-dashed border-[#E5E5E5] rounded-lg p-6 flex items-center justify-center">
                         <div className="flex items-center space-x-3">
                             <Plus
                                 onClick={handlePlusClick}
@@ -121,11 +211,13 @@ const ResourceSection = ({ title }: ResourceSection) => {
                     <UploadModal 
                         onAddCard={handleAddCard}
                         onClose={handleCloseModal}
+                        categoryId="default-category"
+                        uploadedBy="default-user"
                     />
                 )}
             </div> 
         </div>
     );
+    
 }
-
 export default ResourceSection;

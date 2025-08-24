@@ -175,7 +175,7 @@ const TrackingPage: React.FC = () => {
     return (
         <div className="min-h-screen flex">
             {/* 좌측 사이드바 */}
-            <div className="w-64 bg-white border-r border-[#E5E5E5]">
+            <div className="w-80 bg-white border-r border-[#E5E5E5]">
                 {/* 헤더 */}
                 {/* 헤더 */}
                 <div className="px-6 py-4 border-b border-[#E5E5E5]">
@@ -188,30 +188,32 @@ const TrackingPage: React.FC = () => {
                 {/* 네비게이션 메뉴 */}
                 <nav className="mt-6">
                     <div 
-                        onClick={() => navigate('/')}
+                        onClick={()=>navigate('/')}
                         className="px-6 py-2">
-                        <div className="flex items-center space-x-3 cursor-pointer">
-                            <span>📁 Home</span>
+                        <div className="flex items-center px-3 py-2 space-x-3 cursor-pointer text-black-600 rounded-lg">
+                        <span>📁 Home</span>
                         </div>
                     </div>
-                    <div className="px-6 py-2">
-                        <div className="flex items-center space-x-3 cursor-pointer bg-gray-100 text-black-600 rounded-lg">
-                            <span>🔎 Tracking</span>
+                    <div 
+                        onClick={() => navigate('/tracking')}
+                        className="px-6 py-2">
+                        <div className="flex items-center px-3 py-2 space-x-3 bg-gray-100 cursor-pointer">
+                        <span>🔎 Tracking</span>
                         </div>
                     </div>
-                </nav>  
+            </nav>
             </div>
 
             {/* 우측 메인 콘텐츠 영역 */}
             <div className="flex-1 flex flex-col">
                 {/* 상단 헤더 */}
-                <div className="bg-white border-b border-[#E5E5E5] p-2 mb-3 flex justify-between items-center">
+                <div className="bg-white border-b border-[#E5E5E5] px-4 py-2 mb-3 flex justify-between items-center">
                     <h1 className="font-semibold text-xl">🔎 Tracking</h1>
                     <button 
                         onClick={handleOpenAddModal}
                         className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
                     >
-                        Add
+                        Add Member
                     </button>
                 </div>
 
@@ -258,12 +260,12 @@ const TrackingPage: React.FC = () => {
                             <thead className="bg-gray-50">
                                 <tr>
                                     <th className="px-6 py-3 text-left">
-                                        <input
-                                            type="checkbox"
-                                            checked={isAllSelected}
-                                            onChange={(e) => handleSelectAll(e.target.checked)}
-                                            className="rounded border-gray-300"
-                                        />
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                        className="rounded border-gray-300 text-black bg-black checked:bg-black checked:border-black focus:ring-black"
+                                    />
                                     </th>
                                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">구성원</th>
                                     <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">직무/부서</th>
@@ -280,7 +282,7 @@ const TrackingPage: React.FC = () => {
                                                 type="checkbox"
                                                 checked={selectedEmployees.includes(employee.id)}
                                                 onChange={(e) => handleSelectEmployee(employee.id, e.target.checked)}
-                                                className="rounded border-gray-300"
+                                                className="rounded border-gray-300 text-black bg-black checked:bg-black checked:border-black focus:ring-black"
                                             />
                                         </td>
                                         <td className="px-6 py-4">
@@ -296,16 +298,14 @@ const TrackingPage: React.FC = () => {
                                             {employee.job}/{employee.department}
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                                                employee.status === 'onboarding' 
-                                                    ? 'bg-gray-100 text-gray-800' 
-                                                    : 'bg-yellow-100 text-yellow-800'
-                                            }`}>
+                                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
                                                 {employee.status === 'onboarding' ? '온보딩' : '입사 예정'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-gray-900">
-                                            {employee.progress}
+                                        <td className="px-6 py-4">
+                                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                                                {employee.progress}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-900">
                                             <div className="flex items-center space-x-2">
